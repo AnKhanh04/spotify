@@ -11,6 +11,7 @@ import 'screens/now_playing_screen.dart';
 import 'screens/playlist_detail_screen.dart';
 import 'screens/library_screen.dart';
 import 'services/user_provider.dart';
+import 'package:spotify/screens/phone_login_screen.dart'; // Thêm import
 
 void main() {
   runApp(
@@ -63,6 +64,7 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.darkTheme,
       home: userProvider.isLoggedIn ? const BottomNav() : const LoginScreen(),
       routes: {
+        '/phone-login': (context) => const PhoneLoginScreen(), // Thêm route
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/bottomnav': (context) => const BottomNav(),
