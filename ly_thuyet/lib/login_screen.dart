@@ -60,6 +60,10 @@ class _LoginScreenState extends State<LoginScreen> {
         token: token, // ← Lưu token vào storage
       );
 
+      Provider.of<UserProvider>(context, listen: false).setUser(
+        username, email, avatarUrl, fullName, token,
+      );
+
       Navigator.pushReplacementNamed(context, '/bottomnav');
     }
   }
