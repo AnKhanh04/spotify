@@ -4,6 +4,7 @@ import '../services/user_service.dart';
 import '../services/user_provider.dart';
 import '../services/user_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../screens/phone_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -223,7 +224,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(width: 16),
                     IconButton(
                       onPressed: () {
-                        // TODO: Gọi hàm đăng nhập bằng Apple
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const PhoneLoginScreen(),
+                          ),
+                        );
                       },
                       icon: Image.asset(
                         'assets/icons/logo_phone.png',
