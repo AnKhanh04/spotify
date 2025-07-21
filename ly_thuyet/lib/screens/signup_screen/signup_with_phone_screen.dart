@@ -30,9 +30,9 @@ class _PhoneSignUpScreenState extends State<PhoneSignUpScreen> {
   // API base URL
   final String _baseUrl = 'https://music-api-production-89f1.up.railway.app';
 
-  // Validate phone number (VN format: +84 followed by 9-10 digits)
+  // Validate phone number (VN format: +84 followed by 9 digits)
   bool _isValidPhoneNumber(String phone) {
-    final RegExp phoneRegex = RegExp(r'^\+84\d{9,10}$');
+    final RegExp phoneRegex = RegExp(r'^\+84\d{9}$');
     return phoneRegex.hasMatch(phone);
   }
 
@@ -133,7 +133,9 @@ class _PhoneSignUpScreenState extends State<PhoneSignUpScreen> {
         FocusScope.of(context).requestFocus(_usernameFocus);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('OTP xác minh thành công! Vui lòng nhập thông tin người dùng.'),
+            content: Text(
+              'OTP xác minh thành công! Vui lòng nhập thông tin người dùng.',
+            ),
             duration: Duration(seconds: 5),
           ),
         );
@@ -177,7 +179,8 @@ class _PhoneSignUpScreenState extends State<PhoneSignUpScreen> {
 
     // Create avatarUrl using UI Avatars
     final avatarName = fullName.isNotEmpty ? fullName : username;
-    final avatarUrl = 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(avatarName)}';
+    final avatarUrl =
+        'https://ui-avatars.com/api/?name=${Uri.encodeComponent(avatarName)}';
 
     try {
       final response = await http.post(
@@ -202,14 +205,16 @@ class _PhoneSignUpScreenState extends State<PhoneSignUpScreen> {
         await userProvider.setUser(
           user['username'],
           user['email'] ?? '',
-          user['avatar_url'] ?? avatarUrl, // Use avatarUrl if not returned by API
+          user['avatar_url'] ?? avatarUrl,
+          // Use avatarUrl if not returned by API
           user['full_name'] ?? '',
           token,
         );
 
         Navigator.pushReplacementNamed(context, '/bottomnav');
       } else {
-        final error = jsonDecode(response.body)['error'] ?? 'Lỗi đăng ký người dùng';
+        final error =
+            jsonDecode(response.body)['error'] ?? 'Lỗi đăng ký người dùng';
         setState(() {
           _isLoading = false;
           _apiError = error;
@@ -249,119 +254,128 @@ class _PhoneSignUpScreenState extends State<PhoneSignUpScreen> {
   @override
   Widget build(BuildContext context) {
     print('Debug: _isOtpSent = $_isOtpSent, _isOtpVerified = $_isOtpVerified');
-    return Scaffold(
-      appBar: AppBar(title: const Text('Đăng ký bằng số điện thoại')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              enabled: !_isOtpSent,
-              decoration: const InputDecoration(
-                labelText: 'Số điện thoại',
-                prefixText: '+84',
-              ),
-            ),
-            if (_isOtpSent && !_isOtpVerified) ...[
-              const SizedBox(height: 16),
+    return GestureDetector(
+      // Ẩn bàn phím khi nhấn ra ngoài
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Đăng ký bằng số điện thoại')),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               TextField(
-                controller: _otpController,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                focusNode: _otpFocus,
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                enabled: !_isOtpSent,
                 decoration: const InputDecoration(
-                  labelText: 'Nhập mã OTP',
-                  counterText: '',
-                ),
-                onSubmitted: (_) => _verifyOtp(),
-              ),
-            ],
-            if (_isOtpVerified) ...[
-              const SizedBox(height: 16),
-              TextField(
-                controller: _usernameController,
-                keyboardType: TextInputType.text,
-                focusNode: _usernameFocus,
-                decoration: const InputDecoration(
-                  labelText: 'Username',
-                  hintText: 'Nhập username',
+                  labelText: 'Số điện thoại',
+                  prefixText: '+84',
+                  hintText: 'Nhập số điện thoại',
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _fullNameController,
-                keyboardType: TextInputType.text,
-                decoration: const InputDecoration(
-                  labelText: 'Họ và tên',
-                  hintText: 'Nhập họ và tên',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'Nhập email',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                keyboardType: TextInputType.text,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  hintText: 'Nhập Password',
-                ),
-              ),
-            ],
-            const SizedBox(height: 20),
-            if (_apiError != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Text(
-                  _apiError!,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.end,
-              children: [
-                ElevatedButton(
-                  onPressed: _isLoading
-                      ? null
-                      : (_isOtpVerified
-                      ? _submitUserInfo
-                      : _isOtpSent
-                      ? _verifyOtp
-                      : _sendOtp),
-                  child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : Text(_isOtpVerified
-                      ? 'Hoàn tất đăng ký'
-                      : _isOtpSent
-                      ? 'Xác minh OTP'
-                      : 'Gửi mã OTP'),
-                ),
-                if (_isOtpSent && !_isOtpVerified)
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _resendOtp,
-                    child: const Text('Gửi lại OTP'),
+              if (_isOtpSent && !_isOtpVerified) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _otpController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  focusNode: _otpFocus,
+                  decoration: const InputDecoration(
+                    labelText: 'Nhập mã OTP',
+                    counterText: '',
                   ),
-                if (_isOtpSent || _isOtpVerified)
-                  OutlinedButton(
-                    onPressed: _isLoading ? null : _resetToPhoneInput,
-                    child: const Text('Sửa số điện thoại'),
-                  ),
+                  onSubmitted: (_) => _verifyOtp(),
+                ),
               ],
-            ),
-          ],
+              if (_isOtpVerified) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _usernameController,
+                  keyboardType: TextInputType.text,
+                  focusNode: _usernameFocus,
+                  decoration: const InputDecoration(
+                    labelText: 'Username',
+                    hintText: 'Nhập username',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _fullNameController,
+                  keyboardType: TextInputType.text,
+                  decoration: const InputDecoration(
+                    labelText: 'Họ và tên',
+                    hintText: 'Nhập họ và tên',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    hintText: 'Nhập email',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _passwordController,
+                  keyboardType: TextInputType.text,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    hintText: 'Nhập Password',
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+              if (_apiError != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    _apiError!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.end,
+                children: [
+                  ElevatedButton(
+                    onPressed:
+                        _isLoading
+                            ? null
+                            : (_isOtpVerified
+                                ? _submitUserInfo
+                                : _isOtpSent
+                                ? _verifyOtp
+                                : _sendOtp),
+                    child:
+                        _isLoading
+                            ? const CircularProgressIndicator()
+                            : Text(
+                              _isOtpVerified
+                                  ? 'Hoàn tất đăng ký'
+                                  : _isOtpSent
+                                  ? 'Xác minh OTP'
+                                  : 'Gửi mã OTP',
+                            ),
+                  ),
+                  if (_isOtpSent && !_isOtpVerified)
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _resendOtp,
+                      child: const Text('Gửi lại OTP'),
+                    ),
+                  if (_isOtpSent || _isOtpVerified)
+                    OutlinedButton(
+                      onPressed: _isLoading ? null : _resetToPhoneInput,
+                      child: const Text('Sửa số điện thoại'),
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

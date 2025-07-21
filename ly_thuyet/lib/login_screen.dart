@@ -6,6 +6,7 @@ import '../services/user_provider.dart';
 import '../services/user_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../screens/phone_login_screen.dart';
+import 'screens/forgot_pass_screens/forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -47,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final token = result['token'] ?? ''; // ← Lấy token từ kết quả API
       final avatarUrl =
           result['avatarUrl'] ??
-              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(username)}';
+          'https://ui-avatars.com/api/?name=${Uri.encodeComponent(username)}';
 
       Provider.of<UserProvider>(
         context,
@@ -62,9 +63,10 @@ class _LoginScreenState extends State<LoginScreen> {
         token: token, // ← Lưu token vào storage
       );
 
-      Provider.of<UserProvider>(context, listen: false).setUser(
-        username, email, avatarUrl, fullName, token,
-      );
+      Provider.of<UserProvider>(
+        context,
+        listen: false,
+      ).setUser(username, email, avatarUrl, fullName, token);
 
       Navigator.pushReplacementNamed(context, '/bottomnav');
     }
@@ -80,12 +82,15 @@ class _LoginScreenState extends State<LoginScreen> {
         final email = account.email;
         final name = account.displayName ?? 'No Name';
         final avatarUrl =
-            account.photoUrl ?? 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}';
+            account.photoUrl ??
+            'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}';
 
         // Nếu có backend xác thực thì gọi API tại đây
 
-        Provider.of<UserProvider>(context, listen: false)
-            .setUser(name, email, avatarUrl, name, '');
+        Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).setUser(name, email, avatarUrl, name, '');
 
         await UserSecureStorage.setUserInfo(
           username: name,
@@ -103,12 +108,11 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       print('Google Sign-In error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lỗi đăng nhập Google')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Lỗi đăng nhập Google')));
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -193,6 +197,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Quên mật khẩu',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
                 const Text(
                   'Hoặc đăng nhập bằng',
                   style: TextStyle(color: Colors.white54),
@@ -204,23 +225,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      onPressed: (){
-
-                      },
-                      icon: Image.asset(
-                        'assets/icons/logo_gg.png',
-                        height: 50,
-                      ),
+                      onPressed: () {},
+                      icon: Image.asset('assets/icons/logo_gg.png', height: 50),
                     ),
                     const SizedBox(width: 16),
                     IconButton(
                       onPressed: () {
                         // TODO: Gọi hàm đăng nhập bằng Facebook
                       },
-                      icon: Image.asset(
-                        'assets/icons/logo_fb.png',
-                        height: 50,
-                      ),
+                      icon: Image.asset('assets/icons/logo_fb.png', height: 50),
                     ),
                     const SizedBox(width: 16),
                     IconButton(
@@ -244,7 +257,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const SignupOptionsScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const SignupOptionsScreen(),
+                      ),
                     );
                   },
                   child: const Text(

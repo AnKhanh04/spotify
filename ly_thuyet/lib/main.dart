@@ -13,6 +13,7 @@ import 'screens/library_screen.dart';
 import 'services/user_provider.dart';
 import 'package:spotify/screens/phone_login_screen.dart'; // Thêm import
 import 'screens/signup_screen/signup_with_phone_screen.dart';
+import 'screens/forgot_pass_screens/forgot_password_screen.dart';
 
 void main() {
   runApp(
@@ -68,6 +69,7 @@ class _MyAppState extends State<MyApp> {
         '/sign-up-phone': (context) => const PhoneSignUpScreen(),
         '/phone-login': (context) => const PhoneLoginScreen(),
         '/login': (context) => const LoginScreen(),
+        '/forgotpass': (context) => const ForgotPasswordScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/bottomnav': (context) => const BottomNav(),
         '/home': (context) => const HomeScreen(),
