@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:spotify/screens/signup_screen/signup_options_screen.dart';
 import '../services/user_service.dart';
 import '../services/user_provider.dart';
 import '../services/user_secure_storage.dart';
@@ -241,7 +242,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 TextButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/signup');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SignupOptionsScreen()),
+                    );
                   },
                   child: const Text(
                     'Chưa có tài khoản? Đăng ký',
@@ -249,7 +253,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // thêm khoảng trống cuối để tránh đụng bàn phím
               ],
             ),
           ),

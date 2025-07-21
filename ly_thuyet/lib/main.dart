@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'core/configs/theme/app_theme.dart';
 import 'presentation/splash/pages/splash_screen.dart';
 import 'login_screen.dart';
-import 'signup_screen.dart';
+import 'screens/signup_screen/signup_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/search_screen.dart';
 import 'header_bottom_nav/bottom.dart';
@@ -12,6 +12,7 @@ import 'screens/playlist_detail_screen.dart';
 import 'screens/library_screen.dart';
 import 'services/user_provider.dart';
 import 'package:spotify/screens/phone_login_screen.dart'; // Thêm import
+import 'screens/signup_screen/signup_with_phone_screen.dart';
 
 void main() {
   runApp(
@@ -64,7 +65,8 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.darkTheme,
       home: userProvider.isLoggedIn ? const BottomNav() : const LoginScreen(),
       routes: {
-        '/phone-login': (context) => const PhoneLoginScreen(), // Thêm route
+        '/sign-up-phone': (context) => const PhoneSignUpScreen(),
+        '/phone-login': (context) => const PhoneLoginScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/bottomnav': (context) => const BottomNav(),
