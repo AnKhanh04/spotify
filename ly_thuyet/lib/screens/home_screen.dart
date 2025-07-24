@@ -2,10 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../mini_player.dart';
 import '../avatar_drawer.dart';
-import '../services/user_provider.dart'; // <-- Đảm bảo bạn import đúng file
+import '../services/user_provider.dart';
+import '../model/songs_model.dart';
+import '../model/playlist_model.dart';
+import '../services/api_service.dart';
+import 'now_playing_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late Future<List<Song>> _songsFuture;
+  late Future<List<Playlist>> _playlistsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _songsFuture = ApiService.fetchSongs();
+    _playlistsFuture = ApiService.fetchPlaylists();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +42,6 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Tabs + Avatar mở Drawer
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
@@ -73,45 +90,120 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // Grid playlist
+                  // Playlist Grid
                   Padding(
                     padding: const EdgeInsets.all(16),
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 3.5,
-                      children: List.generate(8, (index) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/playlist');
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[850],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Row(
-                              children: [
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Tên playlist',
-                                    style: TextStyle(color: Colors.white),
-                                    overflow: TextOverflow.ellipsis,
+                    child: FutureBuilder<List<Playlist>>(
+                      future: _playlistsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return const Center(child: Text('Lỗi tải playlist', style: TextStyle(color: Colors.white)));
+                        } else {
+                          final playlists = snapshot.data!;
+                          return GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 3.5,
+                            children: playlists.take(8).map((playlist) {
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/playlist',
+                                    arguments: playlist, // Truyền nguyên playlist object
+                                  );
+                                },
+
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[850],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const SizedBox(width: 8),
+                                      if (playlist.image != null && playlist.image!.isNotEmpty)
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(6),
+                                          child: Image.network(
+                                            playlist.image!,
+                                            width: 40,
+                                            height: 40,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          playlist.name,
+                                          style: const TextStyle(color: Colors.white),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
+                              );
+                            }).toList(),
+                          );
+                        }
+                      },
                     ),
                   ),
 
-                  // Trending
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
+                      'Nội dung bạn hay nghe gần đây',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  FutureBuilder<List<Song>>(
+                    future: _songsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return const Center(child: Text('Lỗi tải bài hát', style: TextStyle(color: Colors.white)));
+                      } else {
+                        final songs = snapshot.data!;
+                        return ListView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: songs.length,
+                          itemBuilder: (context, index) {
+                            final song = songs[index];
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(song.imageUrl, width: 60, height: 60, fit: BoxFit.cover),
+                              ),
+                              title: Text(song.title, style: const TextStyle(color: Colors.white)),
+                              subtitle: Text(song.artist, style: const TextStyle(color: Colors.white70)),
+                              trailing: const Icon(Icons.more_vert, color: Colors.white),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => NowPlayingScreen(song: song)),
+                                );
+                              },
+                            );
+                          },
+                        );
+                      }
+                    },
+                  ),
+
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
@@ -177,8 +269,6 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Mini Player cố định
             const MiniPlayer(),
           ],
         ),

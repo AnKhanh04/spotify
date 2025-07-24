@@ -11,9 +11,11 @@ import 'screens/now_playing_screen.dart';
 import 'screens/playlist_detail_screen.dart';
 import 'screens/library_screen.dart';
 import 'services/user_provider.dart';
-import 'package:spotify/screens/phone_login_screen.dart'; // Thêm import
+import 'package:spotify/screens/phone_login_screen.dart';
 import 'screens/signup_screen/signup_with_phone_screen.dart';
 import 'screens/forgot_pass_screens/forgot_password_screen.dart';
+import 'model/songs_model.dart';
+import 'model/playlist_model.dart';
 
 void main() {
   runApp(
@@ -53,7 +55,6 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
-
     if (_isLoading) {
       return const MaterialApp(
         home: SplashScreen(),
@@ -65,18 +66,40 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: userProvider.isLoggedIn ? const BottomNav() : const LoginScreen(),
-      routes: {
-        '/sign-up-phone': (context) => const PhoneSignUpScreen(),
-        '/phone-login': (context) => const PhoneLoginScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/forgotpass': (context) => const ForgotPasswordScreen(),
-        '/signup': (context) => const SignUpScreen(),
-        '/bottomnav': (context) => const BottomNav(),
-        '/home': (context) => const HomeScreen(),
-        '/search': (context) => const SearchScreen(),
-        '/library': (context) => const LibraryScreen(),
-        '/nowplaying': (context) => const NowPlayingScreen(),
-        '/playlist': (context) => const PlaylistDetailScreen(),
+      onGenerateRoute: (settings) {
+        if (settings.name == '/nowplaying') {
+          final song = settings.arguments as Song;
+          return MaterialPageRoute(
+            builder: (context) => NowPlayingScreen(song: song),
+          );
+        }
+        else if (settings.name == '/playlist') {
+          final playlist = settings.arguments as Playlist;
+          return MaterialPageRoute(
+            builder: (context) => PlaylistDetailScreen(playlist: playlist),
+          );
+        }
+
+
+
+        final routes = <String, WidgetBuilder>{
+          '/sign-up-phone': (context) => const PhoneSignUpScreen(),
+          '/phone-login': (context) => const PhoneLoginScreen(),
+          '/login': (context) => const LoginScreen(),
+          '/forgotpass': (context) => const ForgotPasswordScreen(),
+          '/signup': (context) => const SignUpScreen(),
+          '/bottomnav': (context) => const BottomNav(),
+          '/home': (context) => const HomeScreen(),
+          '/search': (context) => const SearchScreen(),
+          '/library': (context) => const LibraryScreen(),
+        };
+
+        final builder = routes[settings.name];
+        if (builder != null) {
+          return MaterialPageRoute(builder: builder);
+        }
+
+        return null;
       },
     );
   }

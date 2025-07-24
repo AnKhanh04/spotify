@@ -1,7 +1,25 @@
 import 'package:flutter/material.dart';
+import '../model/playlist_model.dart';
+import '../model/songs_model.dart'; //
+import '../services/api_service.dart'; //
+import 'now_playing_screen.dart';
+class PlaylistDetailScreen extends StatefulWidget {
+  final Playlist playlist;
 
-class PlaylistDetailScreen extends StatelessWidget {
-  const PlaylistDetailScreen({super.key});
+  const PlaylistDetailScreen({super.key, required this.playlist});
+
+  @override
+  State<PlaylistDetailScreen> createState() => _PlaylistDetailScreenState();
+}
+
+class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
+  late Future<List<Song>> _songsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _songsFuture = ApiService.fetchSongsByPlaylistId(widget.playlist.id);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,12 +28,12 @@ class PlaylistDetailScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: BackButton(color: Colors.white),
+        leading: const BackButton(color: Colors.white),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Ảnh album + tên + artist
+          // Ảnh và thông tin playlist
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
@@ -23,34 +41,33 @@ class PlaylistDetailScreen extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
-                    'https://via.placeholder.com/300x300',
+                    widget.playlist.image ?? 'https://via.placeholder.com/300x300',
                     width: 300,
                     height: 300,
                     fit: BoxFit.cover,
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Cho Bão',
-                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                Text(
+                  widget.playlist.name,
+                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Playlist ID: ${widget.playlist.id}',
+                  style: const TextStyle(color: Colors.white70, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'B Ray',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Album • 8 thg 7 • Mới phát hành',
+                  'Album • Chưa rõ ngày',
                   style: TextStyle(color: Colors.white54, fontSize: 14),
                 ),
               ],
             ),
           ),
-
           const SizedBox(height: 16),
 
-          // Hàng nút + play
+          // Các nút điều khiển
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -68,50 +85,65 @@ class PlaylistDetailScreen extends StatelessWidget {
                   onPressed: () {},
                 ),
                 const Spacer(),
-                CircleAvatar(
+                const CircleAvatar(
                   backgroundColor: Colors.green,
                   radius: 24,
-                  child: const Icon(Icons.pause, color: Colors.black),
+                  child: Icon(Icons.pause, color: Colors.black),
                 ),
               ],
             ),
           ),
-
           const SizedBox(height: 12),
 
           // Danh sách bài hát
           Expanded(
-            child: ListView(
-              children: const [
-                _SongItem(title: 'Intro', artist: 'B Ray'),
-                _SongItem(title: 'Vùng An Toàn', artist: 'B Ray, V#'),
-                _SongItem(title: 'The One', artist: 'B Ray, Đạt G'),
-                _SongItem(title: 'Viết Em Bản Tình Ca', artist: 'B Ray'),
-                _SongItem(title: 'Feel At Home', artist: 'B Ray'),
-              ],
+            child: FutureBuilder<List<Song>>(
+              future: _songsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Lỗi: ${snapshot.error}',
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Chưa có bài hát nào',
+                      style: TextStyle(color: Colors.white54),
+                    ),
+                  );
+                }
+
+                final songs = snapshot.data!;
+                return ListView.builder(
+                  itemCount: songs.length,
+                  itemBuilder: (context, index) {
+                    final song = songs[index];
+                    return ListTile(
+                      leading: const Icon(Icons.music_note, color: Colors.white),
+                      title: Text(song.title, style: const TextStyle(color: Colors.white)),
+                      subtitle: Text(song.artist ?? '', style: const TextStyle(color: Colors.white70)),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => NowPlayingScreen(song: song),
+                          ),
+                        );
+                      },
+
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SongItem extends StatelessWidget {
-  final String title;
-  final String artist;
-
-  const _SongItem({required this.title, required this.artist});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(title, style: const TextStyle(color: Colors.white)),
-      subtitle: Text(artist, style: const TextStyle(color: Colors.white54)),
-      trailing: const Icon(Icons.more_vert, color: Colors.white),
-      onTap: () {
-        Navigator.pushNamed(context, '/nowplaying'); // mở màn hình nghe nhạc
-      },
     );
   }
 }
