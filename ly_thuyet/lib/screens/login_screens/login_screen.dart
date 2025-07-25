@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spotify/screens/signup_screen/signup_options_screen.dart';
-import '../services/user_service.dart';
-import '../services/user_provider.dart';
-import '../services/user_secure_storage.dart';
+import '../../../services/user_service.dart';
+import '../../services/provider/user_provider.dart';
+import '../../../services/user_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import '../screens/phone_login_screen.dart';
-import 'screens/forgot_pass_screens/forgot_password_screen.dart';
+import 'phone_login_screen.dart';
+import '../forgot_pass_screens/forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

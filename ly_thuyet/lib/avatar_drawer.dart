@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../login_screen.dart';
-import '../services/user_provider.dart';
+import 'screens/login_screens/login_screen.dart';
+import 'services/provider/user_provider.dart';
 import '../services/user_secure_storage.dart'; // Đừng quên import phần này
 
 class AvatarDrawer extends StatelessWidget {

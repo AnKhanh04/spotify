@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:spotify/core/configs/assets/app_vectors.dart';
 import 'package:spotify/services/user_secure_storage.dart';
-import 'package:spotify/services/user_provider.dart';
+import 'package:spotify/services/provider/user_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);

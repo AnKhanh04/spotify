@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../mini_player.dart';
 import '../avatar_drawer.dart';
-import '../services/user_provider.dart';
+import '../services/provider/user_provider.dart';
 import '../model/songs_model.dart';
 import '../model/playlist_model.dart';
 import '../services/api_service.dart';
 import 'now_playing_screen.dart';
+import '../services/provider/current_song_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
+    final currentSongProvider = Provider.of<CurrentSongProvider>(context);
     final avatarUrl = userProvider.avatarUrl;
     final fullName = userProvider.fullName;
 
@@ -42,15 +44,14 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Header
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
                       children: [
                         Builder(
                           builder: (context) => GestureDetector(
-                            onTap: () {
-                              Scaffold.of(context).openDrawer();
-                            },
+                            onTap: () => Scaffold.of(context).openDrawer(),
                             child: CircleAvatar(
                               backgroundColor: Colors.grey[800],
                               backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
@@ -90,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                  // Playlist Grid
+                  // Playlist grid
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: FutureBuilder<List<Playlist>>(
@@ -99,7 +100,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Center(child: CircularProgressIndicator());
                         } else if (snapshot.hasError) {
-                          return const Center(child: Text('Lỗi tải playlist', style: TextStyle(color: Colors.white)));
+                          return const Center(
+                            child: Text('Lỗi tải playlist', style: TextStyle(color: Colors.white)),
+                          );
                         } else {
                           final playlists = snapshot.data!;
                           return GridView.count(
@@ -115,10 +118,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Navigator.pushNamed(
                                     context,
                                     '/playlist',
-                                    arguments: playlist, // Truyền nguyên playlist object
+                                    arguments: playlist,
                                   );
                                 },
-
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: Colors.grey[850],
@@ -156,6 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
+                  // Recently played
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
@@ -167,13 +170,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
+
                   FutureBuilder<List<Song>>(
                     future: _songsFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       } else if (snapshot.hasError) {
-                        return const Center(child: Text('Lỗi tải bài hát', style: TextStyle(color: Colors.white)));
+                        return const Center(
+                          child: Text('Lỗi tải bài hát', style: TextStyle(color: Colors.white)),
+                        );
                       } else {
                         final songs = snapshot.data!;
                         return ListView.builder(
@@ -191,10 +197,16 @@ class _HomeScreenState extends State<HomeScreen> {
                               title: Text(song.title, style: const TextStyle(color: Colors.white)),
                               subtitle: Text(song.artist, style: const TextStyle(color: Colors.white70)),
                               trailing: const Icon(Icons.more_vert, color: Colors.white),
-                              onTap: () {
+                              onTap: () async {
+                                // ✅ Cập nhật CurrentSongProvider và lưu vào SharedPreferences
+                                currentSongProvider.setCurrentSong(song);
+
+                                // ✅ Chuyển tới NowPlayingScreen
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => NowPlayingScreen(song: song)),
+                                  MaterialPageRoute(
+                                    builder: (context) => NowPlayingScreen(song: song),
+                                  ),
                                 );
                               },
                             );
@@ -204,6 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
 
+                  // Trending section
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(

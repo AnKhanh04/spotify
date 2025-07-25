@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:provider/provider.dart';
-import '../../services/user_provider.dart';
+import '../../services/provider/user_provider.dart';
 
 class PhoneSignUpScreen extends StatefulWidget {
   const PhoneSignUpScreen({super.key});

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'core/configs/theme/app_theme.dart';
 import 'presentation/splash/pages/splash_screen.dart';
-import 'login_screen.dart';
+import 'screens/login_screens/login_screen.dart';
 import 'screens/signup_screen/signup_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/search_screen.dart';
@@ -10,8 +11,9 @@ import 'header_bottom_nav/bottom.dart';
 import 'screens/now_playing_screen.dart';
 import 'screens/playlist_detail_screen.dart';
 import 'screens/library_screen.dart';
-import 'services/user_provider.dart';
-import 'package:spotify/screens/phone_login_screen.dart';
+import 'services/provider/user_provider.dart';
+import 'services/provider/current_song_provider.dart';
+import 'screens/login_screens/phone_login_screen.dart';
 import 'screens/signup_screen/signup_with_phone_screen.dart';
 import 'screens/forgot_pass_screens/forgot_password_screen.dart';
 import 'model/songs_model.dart';
@@ -22,6 +24,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => CurrentSongProvider()),
       ],
       child: const MyApp(),
     ),
@@ -41,12 +44,16 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _initializeUser();
+    _initializeApp();
   }
 
-  Future<void> _initializeUser() async {
+  Future<void> _initializeApp() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final songProvider = Provider.of<CurrentSongProvider>(context, listen: false);
+
     await userProvider.loadUser();
+    await songProvider.loadSavedSong(); // Load bài hát đã lưu
+
     setState(() {
       _isLoading = false;
     });
@@ -55,6 +62,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
+
     if (_isLoading) {
       return const MaterialApp(
         home: SplashScreen(),
@@ -67,21 +75,39 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.darkTheme,
       home: userProvider.isLoggedIn ? const BottomNav() : const LoginScreen(),
       onGenerateRoute: (settings) {
+        // Route cho màn Now Playing
         if (settings.name == '/nowplaying') {
-          final song = settings.arguments as Song;
-          return MaterialPageRoute(
-            builder: (context) => NowPlayingScreen(song: song),
-          );
+          final args = settings.arguments;
+          if (args is Song) {
+            return MaterialPageRoute(
+              builder: (context) => NowPlayingScreen(song: args),
+            );
+          } else {
+            return MaterialPageRoute(
+              builder: (_) => const Scaffold(
+                body: Center(child: Text("Không có bài hát để phát")),
+              ),
+            );
+          }
         }
-        else if (settings.name == '/playlist') {
-          final playlist = settings.arguments as Playlist;
-          return MaterialPageRoute(
-            builder: (context) => PlaylistDetailScreen(playlist: playlist),
-          );
+
+        // Route cho playlist
+        if (settings.name == '/playlist') {
+          final args = settings.arguments;
+          if (args is Playlist) {
+            return MaterialPageRoute(
+              builder: (context) => PlaylistDetailScreen(playlist: args),
+            );
+          } else {
+            return MaterialPageRoute(
+              builder: (_) => const Scaffold(
+                body: Center(child: Text("Không tìm thấy playlist")),
+              ),
+            );
+          }
         }
 
-
-
+        // Các route còn lại
         final routes = <String, WidgetBuilder>{
           '/sign-up-phone': (context) => const PhoneSignUpScreen(),
           '/phone-login': (context) => const PhoneLoginScreen(),
@@ -99,7 +125,12 @@ class _MyAppState extends State<MyApp> {
           return MaterialPageRoute(builder: builder);
         }
 
-        return null;
+        // Nếu route không tồn tại
+        return MaterialPageRoute(
+          builder: (_) => const Scaffold(
+            body: Center(child: Text("404 - Không tìm thấy trang")),
+          ),
+        );
       },
     );
   }

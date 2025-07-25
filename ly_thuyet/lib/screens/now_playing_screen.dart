@@ -1,26 +1,86 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+
 import '../model/songs_model.dart';
+import '../services/provider/current_song_provider.dart';
 
 class NowPlayingScreen extends StatefulWidget {
   final Song song;
   const NowPlayingScreen({super.key, required this.song});
+
   @override
   State<NowPlayingScreen> createState() => _NowPlayingScreenState();
 }
 
-
 class _NowPlayingScreenState extends State<NowPlayingScreen> {
   late AudioPlayer _audioPlayer;
+  bool isPlaying = true;
 
   @override
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
-    _audioPlayer.setUrl(
-      'https://res.cloudinary.com/dpaobwox0/video/upload/v1753124890/Mu%E1%BB%99n_R%E1%BB%93i_M%C3%A0_Sao_C%C3%B2n_-_S%C6%A1n_T%C3%B9ng_M-TP_youtube_omdem5.mp4',
-    );
-    _audioPlayer.play();
+    _initPlayer();
+
+    // ✅ Cập nhật trạng thái isPlaying theo thời gian thực
+    _audioPlayer.playingStream.listen((isPlayingNow) {
+      setState(() {
+        isPlaying = isPlayingNow;
+      });
+    });
+  }
+
+  Future<void> _initPlayer() async {
+    final prefs = await SharedPreferences.getInstance();
+    final provider = Provider.of<CurrentSongProvider>(context, listen: false);
+
+    final savedSongJson = prefs.getString('current_song');
+    final savedPositionMillis = prefs.getInt('current_position') ?? 0;
+    final wasPlaying = prefs.getBool('is_playing') ?? true;
+
+    bool isSameSong = false;
+
+    if (savedSongJson != null) {
+      final savedSongMap = jsonDecode(savedSongJson);
+      final savedSong = Song.fromJson(savedSongMap);
+      isSameSong = savedSong.id == widget.song.id;
+    }
+
+    await _audioPlayer.stop();
+
+    final duration = await _audioPlayer.setUrl(widget.song.audioUrl);
+    if (duration == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không phát được bài hát này')),
+      );
+      return;
+    }
+
+    if (isSameSong && savedPositionMillis > 0) {
+      await _audioPlayer.seek(Duration(milliseconds: savedPositionMillis));
+      if (wasPlaying) await _audioPlayer.play();
+    } else {
+      await _audioPlayer.seek(Duration.zero);
+      await _audioPlayer.play();
+    }
+
+    // 🧠 Cập nhật provider với bài hát mới
+    provider.setCurrentSong(widget.song);
+    prefs.setBool('is_playing', true);
+
+    // ✅ Ghi nhận tiến trình liên tục
+    _audioPlayer.positionStream.listen((position) async {
+      provider.updatePosition(position);
+      prefs.setInt('current_position', position.inMilliseconds);
+      prefs.setBool('is_playing', _audioPlayer.playing);
+    });
+
+    setState(() {
+      isPlaying = true;
+    });
   }
 
   @override
@@ -42,9 +102,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white),
         ),
         actions: [
@@ -70,34 +128,34 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                   blurRadius: 30,
                 )
               ],
-              image: const DecorationImage(
+              image: DecorationImage(
                 fit: BoxFit.cover,
-                image: NetworkImage(
-                  'https://res.cloudinary.com/dpaobwox0/image/upload/v1753124802/S%C6%A1n_T%C3%B9ng_M-TP_-_Mu%E1%BB%99n_r%E1%BB%93i_m%C3%A0_sao_c%C3%B2n_uym0hk.png',
-                ),
+                image: NetworkImage(widget.song.imageUrl),
               ),
             ),
           ),
           const SizedBox(height: 40),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 35),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 35),
             child: Column(
               children: [
                 Text(
-                  'Muộn rồi mà sao còn',
-                  style: TextStyle(
+                  widget.song.title,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
                   ),
+                  textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  'Sơn Tùng M-TP',
-                  style: TextStyle(
+                  widget.song.artist,
+                  style: const TextStyle(
                     color: Colors.white60,
                     fontSize: 16,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
@@ -147,10 +205,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                   } else {
                     await _audioPlayer.play();
                   }
-                  setState(() {});
+
+                  final prefs = await SharedPreferences.getInstance();
+                  prefs.setBool('is_playing', _audioPlayer.playing);
                 },
                 icon: Icon(
-                  _audioPlayer.playing ? Icons.pause_circle : Icons.play_circle,
+                  isPlaying ? Icons.pause_circle : Icons.play_circle,
                   color: Colors.white,
                   size: 60,
                 ),

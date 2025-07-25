@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../login_screen.dart';
+import 'login_screens/login_screen.dart';
 import '../mini_player.dart';
 import '../avatar_drawer.dart';
-import '../services/user_provider.dart';
+import '../services/provider/user_provider.dart';
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});

@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'services/provider/current_song_provider.dart';
+import 'model/songs_model.dart';
+import 'screens/now_playing_screen.dart';
 
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Kiểm tra xem bàn phím có đang hiển thị không
-    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    final currentSong = context.watch<CurrentSongProvider>().currentSong;
 
-    // Nếu đang mở bàn phím thì không hiển thị MiniPlayer
-    if (isKeyboardOpen) return const SizedBox.shrink();
+    // Nếu chưa có bài hát → không hiển thị mini player
+    if (currentSong == null) return const SizedBox.shrink();
 
     return Align(
       alignment: Alignment.bottomCenter,
       child: GestureDetector(
         onTap: () {
-          Navigator.pushNamed(context, '/nowplaying');
+          // Khi nhấn vào MiniPlayer → mở lại NowPlayingScreen với bài hát hiện tại
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => NowPlayingScreen(song: currentSong),
+            ),
+          );
         },
         child: Container(
           height: 65,
@@ -24,11 +33,11 @@ class MiniPlayer extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
-              // Ảnh bìa bài hát
-              const ClipRRect(
-                borderRadius: BorderRadius.all(Radius.circular(4)),
-                child: Image(
-                  image: NetworkImage('https://via.placeholder.com/50'),
+              // Ảnh bài hát
+              ClipRRect(
+                borderRadius: const BorderRadius.all(Radius.circular(4)),
+                child: Image.network(
+                  currentSong.imageUrl,
                   width: 50,
                   height: 50,
                   fit: BoxFit.cover,
@@ -36,21 +45,21 @@ class MiniPlayer extends StatelessWidget {
               ),
               const SizedBox(width: 12),
 
-              // Expanded để chiếm phần còn lại, tránh tràn
+              // Tên bài hát & nghệ sĩ
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Text(
-                      'Say Yes (Vietnamese Version)',
-                      style: TextStyle(color: Colors.white, fontSize: 14),
+                      currentSong.title,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      'OgeNus, PiaLinh',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      currentSong.artist,
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -58,15 +67,13 @@ class MiniPlayer extends StatelessWidget {
                 ),
               ),
 
-              // Icon play
+              // Nút phát (placeholder – bạn có thể tích hợp player để phát ở đây)
               IconButton(
                 icon: const Icon(Icons.play_arrow, color: Colors.white),
-                onPressed: () {},
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 40,
-                  minHeight: 40,
-                ),
+                onPressed: () {
+                  // Nếu bạn dùng AudioPlayer toàn cục, có thể phát từ đây
+                  // Hoặc chuyển sang `NowPlayingScreen`
+                },
               ),
             ],
           ),
