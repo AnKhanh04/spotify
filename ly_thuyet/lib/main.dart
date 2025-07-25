@@ -18,6 +18,8 @@ import 'screens/signup_screen/signup_with_phone_screen.dart';
 import 'screens/forgot_pass_screens/forgot_password_screen.dart';
 import 'model/songs_model.dart';
 import 'model/playlist_model.dart';
+import 'services/provider/favorite_provider.dart';
+import 'screens/favorite_song_screen.dart';
 
 void main() {
   runApp(
@@ -25,6 +27,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => CurrentSongProvider()),
+        ChangeNotifierProvider(create: (_) => FavoriteProvider()),
       ],
       child: const MyApp(),
     ),
@@ -118,6 +121,7 @@ class _MyAppState extends State<MyApp> {
           '/home': (context) => const HomeScreen(),
           '/search': (context) => const SearchScreen(),
           '/library': (context) => const LibraryScreen(),
+          '/favorites': (context) => const FavoriteSongsScreen(),
         };
 
         final builder = routes[settings.name];

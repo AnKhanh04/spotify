@@ -38,5 +38,40 @@ class ApiService {
     }
   }
 
+  static Future<bool> addToFavorites(int userId, int songId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/favorites'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'user_id': userId, 'song_id': songId}),
+    );
+
+    return response.statusCode == 200 || response.statusCode == 201;
+  }
+
+  static Future<bool> removeFromFavorites(int userId, int songId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/favorites?user_id=$userId&song_id=$songId'),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  static Future<bool> addToFavoritesByUsername(String username, int songId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/favorites'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': username, 'song_id': songId}),
+    );
+    return response.statusCode == 200;
+  }
+
+  static Future<bool> removeFromFavoritesByUsername(String username, int songId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/favorites'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': username, 'song_id': songId}),
+    );
+    return response.statusCode == 200;
+  }
 
 }

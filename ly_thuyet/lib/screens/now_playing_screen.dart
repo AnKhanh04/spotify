@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-
+import '../services/api_service.dart';
 import '../model/songs_model.dart';
 import '../services/provider/current_song_provider.dart';
 
@@ -18,14 +19,15 @@ class NowPlayingScreen extends StatefulWidget {
 class _NowPlayingScreenState extends State<NowPlayingScreen> {
   late AudioPlayer _audioPlayer;
   bool isPlaying = true;
+  bool isFavorite = false;
 
   @override
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
     _initPlayer();
+    _checkFavorite();
 
-    // ✅ Cập nhật trạng thái isPlaying theo thời gian thực
     _audioPlayer.playingStream.listen((isPlayingNow) {
       setState(() {
         isPlaying = isPlayingNow;
@@ -67,11 +69,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
       await _audioPlayer.play();
     }
 
-    // 🧠 Cập nhật provider với bài hát mới
     provider.setCurrentSong(widget.song);
     prefs.setBool('is_playing', true);
 
-    // ✅ Ghi nhận tiến trình liên tục
     _audioPlayer.positionStream.listen((position) async {
       provider.updatePosition(position);
       prefs.setInt('current_position', position.inMilliseconds);
@@ -82,6 +82,56 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
       isPlaying = true;
     });
   }
+
+  Future<String?> _getUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('user');
+
+    if (userJson != null) {
+      final userMap = jsonDecode(userJson);
+      return userMap['username'];
+    }
+
+    return null;
+  }
+
+  Future<void> _checkFavorite() async {
+    final username = await _getUsername();
+    if (username == null) return;
+
+    try {
+      final response = await http.get(Uri.parse('https://music-api-production-89f1.up.railway.app/favorites'));
+      if (response.statusCode == 200) {
+        final List favorites = jsonDecode(response.body);
+        setState(() {
+          isFavorite = favorites.any((fav) =>
+          fav['username'] == username && fav['song_id'] == widget.song.id);
+        });
+      }
+    } catch (e) {
+      print("Lỗi khi kiểm tra yêu thích: $e");
+    }
+  }
+
+
+  Future<void> _toggleFavorite() async {
+    final username = await _getUsername();
+    if (username == null) return;
+
+    if (isFavorite) {
+      final success = await ApiService.removeFromFavoritesByUsername(username, widget.song.id);
+      if (success) {
+        setState(() => isFavorite = false);
+      }
+    } else {
+      final success = await ApiService.addToFavoritesByUsername(username, widget.song.id);
+      if (success) {
+        setState(() => isFavorite = true);
+      }
+    }
+  }
+
+
 
   @override
   void dispose() {
@@ -205,7 +255,6 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                   } else {
                     await _audioPlayer.play();
                   }
-
                   final prefs = await SharedPreferences.getInstance();
                   prefs.setBool('is_playing', _audioPlayer.playing);
                 },
@@ -216,7 +265,13 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 ),
               ),
               IconButton(onPressed: () {}, icon: const Icon(Icons.skip_next_rounded, color: Colors.white, size: 40)),
-              IconButton(onPressed: () {}, icon: const Icon(Icons.repeat, color: Colors.white)),
+              IconButton(
+                onPressed: _toggleFavorite,
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: Colors.redAccent,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 20),
