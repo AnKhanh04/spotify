@@ -43,6 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (result != null) {
+      final userID = result['userID'] ?? '';
       final username = result['username'] ?? 'unknown_user';
       final fullName = result['full_name'] ?? 'No Name';
       final token = result['token'] ?? ''; // ← Lấy token từ kết quả API
@@ -53,9 +54,10 @@ class _LoginScreenState extends State<LoginScreen> {
       Provider.of<UserProvider>(
         context,
         listen: false,
-      ).setUser(username, email, avatarUrl, fullName, token);
+      ).setUser(userID, username, email, avatarUrl, fullName, token);
 
       await UserSecureStorage.setUserInfo(
+        userID: AutofillHints.url,
         username: username,
         email: email,
         avatarUrl: avatarUrl,
@@ -66,53 +68,53 @@ class _LoginScreenState extends State<LoginScreen> {
       Provider.of<UserProvider>(
         context,
         listen: false,
-      ).setUser(username, email, avatarUrl, fullName, token);
+      ).setUser(userID, username, email, avatarUrl, fullName, token);
 
       Navigator.pushReplacementNamed(context, '/bottomnav');
     }
   }
 
-  Future<void> loginWithGoogle() async {
-    final googleSignIn = GoogleSignIn();
-
-    try {
-      final account = await googleSignIn.signIn();
-
-      if (account != null) {
-        final email = account.email;
-        final name = account.displayName ?? 'No Name';
-        final avatarUrl =
-            account.photoUrl ??
-            'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}';
-
-        // Nếu có backend xác thực thì gọi API tại đây
-
-        Provider.of<UserProvider>(
-          context,
-          listen: false,
-        ).setUser(name, email, avatarUrl, name, '');
-
-        await UserSecureStorage.setUserInfo(
-          username: name,
-          email: email,
-          avatarUrl: avatarUrl,
-          fullName: name,
-          token: '',
-        );
-
-        Navigator.pushReplacementNamed(context, '/bottomnav');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đăng nhập Google thất bại')),
-        );
-      }
-    } catch (e) {
-      print('Google Sign-In error: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Lỗi đăng nhập Google')));
-    }
-  }
+  // Future<void> loginWithGoogle() async {
+  //   final googleSignIn = GoogleSignIn();
+  //
+  //   try {
+  //     final account = await googleSignIn.signIn();
+  //
+  //     if (account != null) {
+  //       final email = account.email;
+  //       final name = account.displayName ?? 'No Name';
+  //       final avatarUrl =
+  //           account.photoUrl ??
+  //           'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}';
+  //
+  //       // Nếu có backend xác thực thì gọi API tại đây
+  //
+  //       Provider.of<UserProvider>(
+  //         context,
+  //         listen: false,
+  //       ).setUser(name, email, avatarUrl, name, '');
+  //
+  //       await UserSecureStorage.setUserInfo(
+  //         username: name,
+  //         email: email,
+  //         avatarUrl: avatarUrl,
+  //         fullName: name,
+  //         token: '',
+  //       );
+  //
+  //       Navigator.pushReplacementNamed(context, '/bottomnav');
+  //     } else {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text('Đăng nhập Google thất bại')),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     print('Google Sign-In error: $e');
+  //     ScaffoldMessenger.of(
+  //       context,
+  //     ).showSnackBar(const SnackBar(content: Text('Lỗi đăng nhập Google')));
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {

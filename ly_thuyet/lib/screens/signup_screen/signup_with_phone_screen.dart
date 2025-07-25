@@ -203,6 +203,7 @@ class _PhoneSignUpScreenState extends State<PhoneSignUpScreen> {
         final token = data['token'];
         final userProvider = Provider.of<UserProvider>(context, listen: false);
         await userProvider.setUser(
+          user['userID'],
           user['username'],
           user['email'] ?? '',
           user['avatar_url'] ?? avatarUrl,

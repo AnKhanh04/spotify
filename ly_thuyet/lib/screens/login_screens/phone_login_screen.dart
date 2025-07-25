@@ -121,6 +121,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
         final data = jsonDecode(response.body);
         final user = data['user'];
         final token = data['token'];
+        final userID = user['userID'] ?? '';
         final username = user['username'] ?? 'unknown_user';
         final email = user['email'] ?? '';
         final fullName = user['full_name'] ?? 'No Name';
@@ -130,9 +131,10 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
         print('DEBUG: Avatar URL: $avatarUrl'); // Log để kiểm tra avatar
 
         final userProvider = Provider.of<UserProvider>(context, listen: false);
-        userProvider.setUser(username, email, avatarUrl, fullName, token);
+        userProvider.setUser(userID, username, email, avatarUrl, fullName, token);
 
         await UserSecureStorage.setUserInfo(
+          userID: userID,
           username: username,
           email: email,
           avatarUrl: avatarUrl,

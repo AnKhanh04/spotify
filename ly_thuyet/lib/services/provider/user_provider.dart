@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserProvider with ChangeNotifier {
+  String? _userID;
   String? _username;
   String? _email;
   String? _avatarUrl;
   String? _fullName;
   String? _token;
 
+  String? get userID => _userID;
   String? get userName => _username;
   String? get email => _email;
   String? get avatarUrl => _avatarUrl;
@@ -23,6 +25,7 @@ class UserProvider with ChangeNotifier {
     final userData = prefs.getString('user');
     if (userData != null) {
       final Map<String, dynamic> userMap = json.decode(userData);
+      _userID = userMap['userID'];
       _username = userMap['username'];
       _email = userMap['email'];
       _avatarUrl = userMap['avatarUrl'];
@@ -33,7 +36,8 @@ class UserProvider with ChangeNotifier {
   }
 
   // ✅ Lưu user vào SharedPreferences khi đăng nhập
-  Future<void> setUser(String userName, String email, String avatarUrl, String fullName, String token) async {
+  Future<void> setUser(String userID, String userName, String email, String avatarUrl, String fullName, String token) async {
+    _userID = userID;
     _username = userName;
     _email = email;
     _avatarUrl = avatarUrl;
@@ -42,6 +46,7 @@ class UserProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final userMap = {
+      'userID': _userID,
       'username': _username,
       'email': _email,
       'avatarUrl': _avatarUrl,
@@ -55,6 +60,7 @@ class UserProvider with ChangeNotifier {
 
   // ✅ Xoá dữ liệu khi logout
   Future<void> clearUser() async {
+    _userID = null;
     _username = null;
     _email = null;
     _avatarUrl = null;

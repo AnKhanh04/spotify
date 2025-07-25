@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class UserSecureStorage {
   static const _storage = FlutterSecureStorage();
 
+  static const _keyUserID = 'userID';
   static const _keyUsername = 'username';
   static const _keyEmail = 'email';
   static const _keyAvatarUrl = 'avatarUrl';
@@ -10,12 +11,14 @@ class UserSecureStorage {
   static const _keyToken = 'token';
 
   static Future setUserInfo({
+    required String userID,
     required String username,
     required String email,
     required String avatarUrl,
     required String fullName,
     String token = '',
   }) async {
+    await _storage.write(key: _keyUserID, value: userID);
     await _storage.write(key: _keyUsername, value: username);
     await _storage.write(key: _keyEmail, value: email);
     await _storage.write(key: _keyAvatarUrl, value: avatarUrl);
@@ -24,6 +27,7 @@ class UserSecureStorage {
   }
 
   static Future<Map<String, String?>> getUserInfo() async {
+    final userID = await _storage.read(key: _keyUserID);
     final username = await _storage.read(key: _keyUsername);
     final email = await _storage.read(key: _keyEmail);
     final avatarUrl = await _storage.read(key: _keyAvatarUrl);
@@ -31,6 +35,7 @@ class UserSecureStorage {
     final token = await _storage.read(key: _keyToken);
 
     return {
+      'userID': userID,
       'username': username,
       'email': email,
       'avatarUrl': avatarUrl,

@@ -6,8 +6,10 @@ import '../services/provider/user_provider.dart';
 import '../model/songs_model.dart';
 import '../model/playlist_model.dart';
 import '../services/api_service.dart';
+import '../services/user_secure_storage.dart';
 import 'now_playing_screen.dart';
 import '../services/provider/current_song_provider.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,6 +26,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _songsFuture = ApiService.fetchSongs();
     _playlistsFuture = ApiService.fetchPlaylists();
+  }
+
+  void checkUserId() async {
+    final info = await UserSecureStorage.getUserInfo();
+    print('USER ID LẤY TỪ SECURE STORAGE: ${info['userId']}');
   }
 
   @override
