@@ -28,11 +28,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _playlistsFuture = ApiService.fetchPlaylists();
   }
 
-  void checkUserId() async {
-    final info = await UserSecureStorage.getUserInfo();
-    print('USER ID LẤY TỪ SECURE STORAGE: ${info['userId']}');
-  }
-
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
