@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 
 class AppVectors{
   static const String basePath = 'assets/vectors/';

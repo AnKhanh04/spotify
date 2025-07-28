@@ -121,14 +121,13 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
         final data = jsonDecode(response.body);
         final user = data['user'];
         final token = data['token'];
-        final userID = user['userID'] ?? '';
+        final userID = user['id']?.toString() ?? ''; // Sửa từ user['userID'] thành user['id']
         final username = user['username'] ?? 'unknown_user';
         final email = user['email'] ?? '';
         final fullName = user['full_name'] ?? 'No Name';
-        final avatarUrl = user['avatar_url'] ?? // Lấy từ API
-            'https://ui-avatars.com/api/?name=${Uri.encodeComponent(username)}'; // Fallback
+        final avatarUrl = user['avatar_url'] ?? 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(username)}';
 
-        print('DEBUG: Avatar URL: $avatarUrl'); // Log để kiểm tra avatar
+        print('DEBUG: Saving user data - userID: $userID, username: $username, fullName: $fullName, token: $token'); // Thêm log
 
         final userProvider = Provider.of<UserProvider>(context, listen: false);
         userProvider.setUser(userID, username, email, avatarUrl, fullName, token);

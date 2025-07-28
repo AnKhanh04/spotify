@@ -126,7 +126,7 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                     return ListTile(
                       leading: const Icon(Icons.music_note, color: Colors.white),
                       title: Text(song.title, style: const TextStyle(color: Colors.white)),
-                      subtitle: Text(song.artist ?? '', style: const TextStyle(color: Colors.white70)),
+                      subtitle: Text(song.artist, style: const TextStyle(color: Colors.white70)),
                       onTap: () {
                         Navigator.push(
                           context,

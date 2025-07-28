@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:google_sign_in/google_sign_in.dart';
 
 class UserService {
   static const String baseUrl = 'https://music-api-production-89f1.up.railway.app/users';

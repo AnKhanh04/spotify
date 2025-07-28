@@ -1,11 +1,12 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Thêm import này
 import '../services/api_service.dart';
 import '../model/songs_model.dart';
+import '../services/provider/favorite_provider.dart';
 import '../services/provider/current_song_provider.dart';
 
 class NowPlayingScreen extends StatefulWidget {
@@ -19,7 +20,7 @@ class NowPlayingScreen extends StatefulWidget {
 class _NowPlayingScreenState extends State<NowPlayingScreen> {
   late AudioPlayer _audioPlayer;
   bool isPlaying = true;
-  bool isFavorite = false;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -27,12 +28,66 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
     _audioPlayer = AudioPlayer();
     _initPlayer();
     _checkFavorite();
-
     _audioPlayer.playingStream.listen((isPlayingNow) {
       setState(() {
         isPlaying = isPlayingNow;
       });
     });
+  }
+
+  Future<int?> _getUserId() async {
+    const storage = FlutterSecureStorage(); // Sử dụng FlutterSecureStorage
+    final userId = await storage.read(key: 'userID'); // Đọc userID từ FlutterSecureStorage
+    print('userId from FlutterSecureStorage: $userId');
+    return userId != null ? int.tryParse(userId) : null;
+  }
+
+  Future<void> _checkFavorite() async {
+    final userId = await _getUserId();
+    print('userId from _checkFavorite: $userId');
+    if (userId == null) {
+      _showError('Please login to use favorites');
+      return;
+    }
+    setState(() => isLoading = true);
+    try {
+      final isFavorite = await ApiService.isFavorite(userId, widget.song.id);
+      final favoriteProvider = Provider.of<FavoriteProvider>(context, listen: false);
+      if (isFavorite != favoriteProvider.isFavorite(widget.song.id)) {
+        await favoriteProvider.loadFavorites(userId);
+      }
+    } catch (e) {
+      print('Error in _checkFavorite: $e');
+      _showError('Error checking favorite: $e');
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final userId = await _getUserId();
+    print('userId from _toggleFavorite: $userId');
+    if (userId == null) {
+      _showError('Please login to use favorites');
+      return;
+    }
+    setState(() => isLoading = true);
+    try {
+      final success = await Provider.of<FavoriteProvider>(context, listen: false).toggleFavorite(userId, widget.song.id);
+      print('toggleFavorite success: $success');
+      if (success) {
+        _showSuccess(Provider.of<FavoriteProvider>(context, listen: false).isFavorite(widget.song.id)
+            ? 'Added to favorites'
+            : 'Removed from favorites');
+      } else {
+        _showError('Failed to update favorite');
+      }
+    } catch (e) {
+      print('Error in _toggleFavorite: $e');
+      _showError('Error toggling favorite: $e');
+    } finally {
+      setState(() => isLoading = false);
+    }
   }
 
   Future<void> _initPlayer() async {
@@ -55,9 +110,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
 
     final duration = await _audioPlayer.setUrl(widget.song.audioUrl);
     if (duration == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Không phát được bài hát này')),
-      );
+      _showError('Cannot play this song');
       return;
     }
 
@@ -83,60 +136,16 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
     });
   }
 
-  Future<String?> _getUsername() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userJson = prefs.getString('user');
-
-    if (userJson != null) {
-      final userMap = jsonDecode(userJson);
-      return userMap['username'];
-    }
-
-    return null;
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
-  Future<void> _checkFavorite() async {
-    final username = await _getUsername();
-    if (username == null) return;
-
-    try {
-      final response = await http.get(Uri.parse('https://music-api-production-89f1.up.railway.app/favorites'));
-      if (response.statusCode == 200) {
-        final List favorites = jsonDecode(response.body);
-        setState(() {
-          isFavorite = favorites.any((fav) =>
-          fav['username'] == username && fav['song_id'] == widget.song.id);
-        });
-      }
-    } catch (e) {
-      print("Lỗi khi kiểm tra yêu thích: $e");
-    }
-  }
-
-
-  Future<void> _toggleFavorite() async {
-    final username = await _getUsername();
-    if (username == null) return;
-
-    if (isFavorite) {
-      final success = await ApiService.removeFromFavoritesByUsername(username, widget.song.id);
-      if (success) {
-        setState(() => isFavorite = false);
-      }
-    } else {
-      final success = await ApiService.addToFavoritesByUsername(username, widget.song.id);
-      if (success) {
-        setState(() => isFavorite = true);
-      }
-    }
-  }
-
-
-
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
+    );
   }
 
   String _formatDuration(Duration d) {
@@ -159,7 +168,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
           IconButton(
             onPressed: () {},
             icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
-          )
+          ),
         ],
         elevation: 0,
       ),
@@ -176,7 +185,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                   color: Colors.white24,
                   offset: Offset(0, 10),
                   blurRadius: 30,
-                )
+                ),
               ],
               image: DecorationImage(
                 fit: BoxFit.cover,
@@ -265,11 +274,14 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 ),
               ),
               IconButton(onPressed: () {}, icon: const Icon(Icons.skip_next_rounded, color: Colors.white, size: 40)),
-              IconButton(
-                onPressed: _toggleFavorite,
-                icon: Icon(
-                  isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: Colors.redAccent,
+              Consumer<FavoriteProvider>(
+                builder: (context, favoriteProvider, child) => IconButton(
+                  onPressed: isLoading ? null : _toggleFavorite,
+                  icon: Icon(
+                    favoriteProvider.isFavorite(widget.song.id) ? Icons.favorite : Icons.favorite_border,
+                    color: Colors.redAccent,
+                    size: 30,
+                  ),
                 ),
               ),
             ],
@@ -278,5 +290,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 }

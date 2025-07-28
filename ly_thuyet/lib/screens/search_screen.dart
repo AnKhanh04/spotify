@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'login_screens/login_screen.dart';
 import '../mini_player.dart';
 import '../avatar_drawer.dart';
 import '../services/provider/user_provider.dart';

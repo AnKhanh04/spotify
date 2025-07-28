@@ -4,7 +4,6 @@ import 'package:spotify/screens/signup_screen/signup_options_screen.dart';
 import '../../../services/user_service.dart';
 import '../../services/provider/user_provider.dart';
 import '../../../services/user_secure_storage.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'phone_login_screen.dart';
 import '../forgot_pass_screens/forgot_password_screen.dart';
 
@@ -49,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final token = result['token'] ?? ''; // ← Lấy token từ kết quả API
       final avatarUrl =
           result['avatarUrl'] ??
-          'https://ui-avatars.com/api/?name=${Uri.encodeComponent(username)}';
+              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(username)}';
 
       Provider.of<UserProvider>(
         context,
@@ -57,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ).setUser(userID, username, email, avatarUrl, fullName, token);
 
       await UserSecureStorage.setUserInfo(
-        userID: AutofillHints.url,
+        userID: userID, // Sửa từ AutofillHints.url thành userID
         username: username,
         email: email,
         avatarUrl: avatarUrl,
@@ -183,18 +182,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     child:
-                        _isLoading
-                            ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                            : const Text(
-                              'Đăng nhập',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
+                    _isLoading
+                        ? const CircularProgressIndicator(
+                      color: Colors.white,
+                    )
+                        : const Text(
+                      'Đăng nhập',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),

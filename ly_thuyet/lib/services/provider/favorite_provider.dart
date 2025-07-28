@@ -1,39 +1,59 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-class FavoriteProvider extends ChangeNotifier {
-  final List<int> _favoriteSongIds = [];
+import '/services/api_service.dart';
+import '/model/songs_model.dart';
 
-  List<int> get favoriteSongIds => _favoriteSongIds;
+class FavoriteProvider extends ChangeNotifier {
+  final List<Song> _favoriteSongs = [];
+  bool _isLoading = false;
+
+  List<Song> get favoriteSongs => List.unmodifiable(_favoriteSongs);
+  bool get isLoading => _isLoading;
 
   Future<void> loadFavorites(int userId) async {
-    final response = await http.get(Uri.parse('https://yourapi.com/favorites'));
-    if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body);
-      _favoriteSongIds.clear();
-      _favoriteSongIds.addAll(
-        data.where((item) => item['user_id'] == userId).map<int>((item) => item['song_id']),
-      );
+    _isLoading = true;
+    notifyListeners();
+    print('Loading favorites for userId: $userId');
+    try {
+      final songs = await ApiService.getFavoriteSongs(userId);
+      print('Loaded songs: $songs'); // Log dữ liệu trả về
+      _favoriteSongs.clear();
+      _favoriteSongs.addAll(songs);
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      print('Error loading favorites: $e');
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> toggleFavorite(int userId, int songId) async {
-    if (_favoriteSongIds.contains(songId)) {
-      // TODO: tạo API DELETE nếu muốn huỷ yêu thích
-      _favoriteSongIds.remove(songId);
-    } else {
-      final response = await http.post(
-        Uri.parse('https://yourapi.com/favorites'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'user_id': userId, 'song_id': songId}),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        _favoriteSongIds.add(songId);
-      }
-    }
+  Future<bool> toggleFavorite(int userId, int songId) async {
+    _isLoading = true;
     notifyListeners();
+    try {
+      final isCurrentlyFavorite = _favoriteSongs.any((song) => song.id == songId);
+      bool success;
+      if (isCurrentlyFavorite) {
+        success = await ApiService.removeFavorite(userId, songId);
+        if (success) {
+          _favoriteSongs.removeWhere((song) => song.id == songId);
+        }
+      } else {
+        success = await ApiService.addFavorite(userId, songId);
+        if (success) {
+          await loadFavorites(userId); // Làm mới danh sách
+        }
+      }
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      print('Error toggling favorite: $e');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 
-  bool isFavorite(int songId) => _favoriteSongIds.contains(songId);
+  bool isFavorite(int songId) => _favoriteSongs.any((song) => song.id == songId);
 }

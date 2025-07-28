@@ -10,7 +10,7 @@ class UserSecureStorage {
   static const _keyFullName = 'fullName';
   static const _keyToken = 'token';
 
-  static Future setUserInfo({
+  static Future<void> setUserInfo({
     required String userID,
     required String username,
     required String email,
@@ -18,6 +18,7 @@ class UserSecureStorage {
     required String fullName,
     String token = '',
   }) async {
+    print('Saving to SecureStorage - userID: $userID, username: $username, fullName: $fullName, token: $token');
     await _storage.write(key: _keyUserID, value: userID);
     await _storage.write(key: _keyUsername, value: username);
     await _storage.write(key: _keyEmail, value: email);
@@ -34,17 +35,19 @@ class UserSecureStorage {
     final fullName = await _storage.read(key: _keyFullName);
     final token = await _storage.read(key: _keyToken);
 
+    print('Reading from SecureStorage - userID: $userID, username: $username, fullName: $fullName, token: $token');
+
     return {
       'userID': userID,
       'username': username,
       'email': email,
       'avatarUrl': avatarUrl,
-      'full_name': fullName,
+      'fullName': fullName,
       'token': token,
     };
   }
 
-  static Future clearUserInfo() async {
+  static Future<void> clearUserInfo() async {
     await _storage.deleteAll();
   }
 }

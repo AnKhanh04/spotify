@@ -6,7 +6,6 @@ import '../services/provider/user_provider.dart';
 import '../model/songs_model.dart';
 import '../model/playlist_model.dart';
 import '../services/api_service.dart';
-import '../services/user_secure_storage.dart';
 import 'now_playing_screen.dart';
 import '../services/provider/current_song_provider.dart';
 
