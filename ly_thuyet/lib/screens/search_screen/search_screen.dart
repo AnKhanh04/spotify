@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../mini_player.dart';
-import '../avatar_drawer.dart';
-import '../services/provider/user_provider.dart';
+import '../../mini_player.dart';
+import '../../avatar_drawer.dart';
+import '../../services/provider/user_provider.dart';
+import 'search_result_screen.dart';
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
@@ -10,7 +11,6 @@ class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      // Ẩn bàn phím khi nhấn ra ngoài
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -48,22 +48,19 @@ class SearchScreen extends StatelessWidget {
                                   child: CircleAvatar(
                                     backgroundColor: Colors.grey[800],
                                     backgroundImage:
-                                        avatarUrl != null &&
-                                                avatarUrl.isNotEmpty
-                                            ? NetworkImage(avatarUrl)
-                                            : null,
-                                    child:
-                                        (avatarUrl == null || avatarUrl.isEmpty)
-                                            ? Text(
-                                              (fullName != null &&
-                                                      fullName.isNotEmpty)
-                                                  ? fullName[0].toUpperCase()
-                                                  : '?',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                            : null,
+                                    avatarUrl != null && avatarUrl.isNotEmpty
+                                        ? NetworkImage(avatarUrl)
+                                        : null,
+                                    child: (avatarUrl == null || avatarUrl.isNotEmpty)
+                                        ? Text(
+                                      (fullName != null && fullName.isNotEmpty)
+                                          ? fullName[0].toUpperCase()
+                                          : '?',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                        : null,
                                   ),
                                 );
                               },
@@ -106,6 +103,14 @@ class SearchScreen extends StatelessWidget {
                               borderSide: BorderSide.none,
                             ),
                           ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SearchResultScreen(),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(height: 20),

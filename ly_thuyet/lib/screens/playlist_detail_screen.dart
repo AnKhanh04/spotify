@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../model/playlist_model.dart';
-import '../model/songs_model.dart'; //
-import '../services/api_service.dart'; //
+import '../model/songs_model.dart';
+import '../services/api_service.dart';
 import 'now_playing_screen.dart';
+import '../services/provider/current_song_provider.dart';
 class PlaylistDetailScreen extends StatefulWidget {
   final Playlist playlist;
 
@@ -31,38 +33,37 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
         leading: const BackButton(color: Colors.white),
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Ảnh và thông tin playlist
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    widget.playlist.image ?? 'https://via.placeholder.com/300x300',
-                    width: 300,
-                    height: 300,
-                    fit: BoxFit.cover,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      widget.playlist.image ?? '',
+                      width: 200, // Thu nhỏ kích thước
+                      height: 200, // Thu nhỏ kích thước
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 200,
+                        height: 200,
+                        color: Colors.grey[800],
+                        child: const Icon(Icons.music_note, color: Colors.white, size: 50),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  widget.playlist.name,
-                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Playlist ID: ${widget.playlist.id}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Album • Chưa rõ ngày',
-                  style: TextStyle(color: Colors.white54, fontSize: 14),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Text(
+                    widget.playlist.name,
+                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -120,22 +121,62 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
 
                 final songs = snapshot.data!;
                 return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: songs.length,
                   itemBuilder: (context, index) {
                     final song = songs[index];
-                    return ListTile(
-                      leading: const Icon(Icons.music_note, color: Colors.white),
-                      title: Text(song.title, style: const TextStyle(color: Colors.white)),
-                      subtitle: Text(song.artist, style: const TextStyle(color: Colors.white70)),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => NowPlayingScreen(song: song),
+                    return Card(
+                      color: Colors.grey[900],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: Image.network(
+                            song.imageUrl ?? '',
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              width: 50,
+                              height: 50,
+                              color: Colors.grey[800],
+                              child: const Icon(Icons.music_note, color: Colors.white),
+                            ),
                           ),
-                        );
-                      },
-
+                        ),
+                        title: Text(
+                          song.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          maxLines: 1,
+                        ),
+                        subtitle: Text(
+                          song.artist.isEmpty ? 'Unknown Artist' : song.artist,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          maxLines: 1,
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NowPlayingScreen(song: song),
+                            ),
+                          );
+                          // Gọi setCurrentSong với cùng song
+                          Provider.of<CurrentSongProvider>(context, listen: false).setCurrentSong(song);
+                        },
+                      ),
                     );
                   },
                 );

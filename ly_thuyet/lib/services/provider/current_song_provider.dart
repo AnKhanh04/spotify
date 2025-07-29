@@ -10,8 +10,28 @@ class CurrentSongProvider with ChangeNotifier {
   Song? get currentSong => _currentSong;
   Duration get currentPosition => _currentPosition;
 
+  CurrentSongProvider() {
+    loadSavedSong();
+  }
+
   void setCurrentSong(Song song) {
-    _currentSong = song;
+    // Lấy JSON gốc từ song để kiểm tra artist_name
+    Map<String, dynamic> jsonData = song.toJson();
+    String artistValue = song.artist.isEmpty && jsonData.containsKey('artist_name')
+        ? (jsonData['artist_name'] as String)
+        : (song.artist.isEmpty ? 'Unknown Artist' : song.artist);
+
+    _currentSong = Song(
+      id: song.id,
+      title: song.title,
+      artistId: song.artistId,
+      albumId: song.albumId,
+      duration: song.duration,
+      imageUrl: song.imageUrl,
+      audioUrl: song.audioUrl,
+      lyrics: song.lyrics,
+      artist: artistValue,
+    );
     _currentPosition = Duration.zero;
     saveToPrefs();
     notifyListeners();
@@ -26,28 +46,43 @@ class CurrentSongProvider with ChangeNotifier {
   void clearSong() {
     _currentSong = null;
     _currentPosition = Duration.zero;
+    saveToPrefs();
     notifyListeners();
   }
 
-  // ✅ Lưu bài hát & vị trí phát
   Future<void> saveToPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     if (_currentSong != null) {
-      prefs.setString('current_song', jsonEncode(_currentSong!.toJson()));
-      prefs.setInt('current_position', _currentPosition.inMilliseconds);
+      try {
+        final jsonString = jsonEncode(_currentSong!.toJson());
+        prefs.setString('current_song', jsonString);
+        prefs.setInt('current_position', _currentPosition.inMilliseconds);
+        print('Saved to prefs: $jsonString');
+      } catch (e) {
+        print('Error saving to prefs: $e');
+      }
+    } else {
+      prefs.remove('current_song');
+      prefs.remove('current_position');
     }
   }
 
-  // ✅ Tải lại bài hát và vị trí
   Future<void> loadSavedSong() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString('current_song');
+    print('Loaded from prefs: $jsonString');
     final positionMs = prefs.getInt('current_position') ?? 0;
     if (jsonString != null) {
-      final jsonMap = jsonDecode(jsonString);
-      _currentSong = Song.fromJson(jsonMap);
-      _currentPosition = Duration(milliseconds: positionMs);
-      notifyListeners();
+      try {
+        final jsonMap = jsonDecode(jsonString);
+        _currentSong = Song.fromJson(jsonMap);
+        _currentPosition = Duration(milliseconds: positionMs);
+        notifyListeners();
+      } catch (e) {
+        print('Error loading from prefs: $e');
+        _currentSong = null;
+        _currentPosition = Duration.zero;
+      }
     }
   }
 }

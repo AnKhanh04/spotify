@@ -11,14 +11,14 @@ class MiniPlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentSong = context.watch<CurrentSongProvider>().currentSong;
 
-    // Nếu chưa có bài hát → không hiển thị mini player
     if (currentSong == null) return const SizedBox.shrink();
+
+    print('MiniPlayer - Artist: ${currentSong.artist}, Full Data: ${currentSong.toJson()}');
 
     return Align(
       alignment: Alignment.bottomCenter,
       child: GestureDetector(
         onTap: () {
-          // Khi nhấn vào MiniPlayer → mở lại NowPlayingScreen với bài hát hiện tại
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -33,7 +33,6 @@ class MiniPlayer extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
-              // Ảnh bài hát
               ClipRRect(
                 borderRadius: const BorderRadius.all(Radius.circular(4)),
                 child: Image.network(
@@ -41,11 +40,15 @@ class MiniPlayer extends StatelessWidget {
                   width: 50,
                   height: 50,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 50,
+                    height: 50,
+                    color: Colors.grey[800],
+                    child: const Icon(Icons.music_note, color: Colors.white),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
-
-              // Tên bài hát & nghệ sĩ
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +61,7 @@ class MiniPlayer extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      currentSong.artist,
+                      currentSong.artist.isEmpty ? 'Unknown Artist' : currentSong.artist,
                       style: const TextStyle(color: Colors.white70, fontSize: 12),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -66,14 +69,9 @@ class MiniPlayer extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Nút phát (placeholder – bạn có thể tích hợp player để phát ở đây)
               IconButton(
                 icon: const Icon(Icons.play_arrow, color: Colors.white),
-                onPressed: () {
-                  // Nếu bạn dùng AudioPlayer toàn cục, có thể phát từ đây
-                  // Hoặc chuyển sang `NowPlayingScreen`
-                },
+                onPressed: () {},
               ),
             ],
           ),

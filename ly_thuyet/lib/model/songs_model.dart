@@ -3,7 +3,7 @@ class Song {
   final String title;
   final int? artistId;
   final int? albumId;
-  final int? duration; // <- duration là INT trong DB
+  final int? duration;
   final String imageUrl;
   final String audioUrl;
   final String? lyrics;
@@ -31,7 +31,7 @@ class Song {
       imageUrl: json['image_url'] ?? '',
       audioUrl: json['audio_url'] ?? '',
       lyrics: json['lyrics'],
-      artist: json['artist'] ?? '',
+      artist: json['artist_name'] ?? json['artist'] ?? 'Unknown Artist', // Ưu tiên artist_name
     );
   }
 
@@ -45,7 +45,8 @@ class Song {
       'image_url': imageUrl,
       'audio_url': audioUrl,
       'lyrics': lyrics,
-      'artist':artist,
+      'artist': artist,
+      'artist_name': artist, // Đảm bảo artist_name luôn bằng artist
     };
   }
 }

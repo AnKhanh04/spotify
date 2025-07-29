@@ -6,7 +6,7 @@ import 'presentation/splash/pages/splash_screen.dart';
 import 'screens/login_screens/login_screen.dart';
 import 'screens/signup_screen/signup_screen.dart';
 import 'screens/home_screen.dart';
-import 'screens/search_screen.dart';
+import 'screens/search_screen/search_screen.dart';
 import 'header_bottom_nav/bottom.dart';
 import 'screens/now_playing_screen.dart';
 import 'screens/playlist_detail_screen.dart';
