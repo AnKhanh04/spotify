@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '/services/user_secure_storage.dart';
 
 class UserProvider with ChangeNotifier {
   String? _userID;
@@ -19,23 +18,18 @@ class UserProvider with ChangeNotifier {
 
   bool get isLoggedIn => _token != null;
 
-  // ✅ Load user từ SharedPreferences khi mở app
   Future<void> loadUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userData = prefs.getString('user');
-    if (userData != null) {
-      final Map<String, dynamic> userMap = json.decode(userData);
-      _userID = userMap['userID'];
-      _username = userMap['username'];
-      _email = userMap['email'];
-      _avatarUrl = userMap['avatarUrl'];
-      _fullName = userMap['fullName'];
-      _token = userMap['token'];
-      notifyListeners();
-    }
+    final userData = await UserSecureStorage.getUserInfo();
+    _userID = userData['userID'];
+    _username = userData['username'];
+    _email = userData['email'];
+    _avatarUrl = userData['avatarUrl'];
+    _fullName = userData['fullName'];
+    _token = userData['token'];
+    notifyListeners();
   }
 
-  // ✅ Lưu user vào SharedPreferences khi đăng nhập
+  // ✅ Lưu user vào UserSecureStorage khi đăng nhập
   Future<void> setUser(String userID, String userName, String email, String avatarUrl, String fullName, String token) async {
     _userID = userID;
     _username = userName;
@@ -44,17 +38,14 @@ class UserProvider with ChangeNotifier {
     _fullName = fullName;
     _token = token;
 
-    final prefs = await SharedPreferences.getInstance();
-    final userMap = {
-      'userID': _userID,
-      'username': _username,
-      'email': _email,
-      'avatarUrl': _avatarUrl,
-      'fullName': _fullName,
-      'token': _token,
-    };
-    await prefs.setString('user', json.encode(userMap));
-
+    await UserSecureStorage.setUserInfo(
+      userID: userID,
+      username: userName,
+      email: email,
+      avatarUrl: avatarUrl,
+      fullName: fullName,
+      token: token,
+    );
     notifyListeners();
   }
 
@@ -67,9 +58,7 @@ class UserProvider with ChangeNotifier {
     _fullName = null;
     _token = null;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('user');
-
+    await UserSecureStorage.clearUserInfo();
     notifyListeners();
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/home_screen.dart';
 import '../screens/search_screen/search_screen.dart';
 import '../screens/library_screen.dart';
-//import '../screens/premium_screen.dart';
+import '../screens/premium_screen.dart';
 
 class BottomNav extends StatefulWidget {
   const BottomNav({super.key});
@@ -18,7 +18,7 @@ class _BottomNavState extends State<BottomNav> {
     HomeScreen(),
     SearchScreen(),
     LibraryScreen(),
-    //PremiumScreen(),
+    PremiumScreen(),
   ];
 
   void _onTabTapped(int index) {

@@ -9,9 +9,9 @@ import '../services/api_service.dart';
 import 'now_playing_screen.dart';
 import '../services/provider/current_song_provider.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -182,13 +182,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text('Lỗi tải bài hát', style: TextStyle(color: Colors.white)),
                         );
                       } else {
-                        final songs = snapshot.data!;
+                        final songs = snapshot.data!.take(3);
                         return ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
                           itemCount: songs.length,
                           itemBuilder: (context, index) {
-                            final song = songs[index];
+                            final song = songs.elementAt(index); // Sử dụng elementAt thay vì index trực tiếp
                             return ListTile(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                               leading: ClipRRect(
@@ -199,10 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               subtitle: Text(song.artist, style: const TextStyle(color: Colors.white70)),
                               trailing: const Icon(Icons.more_vert, color: Colors.white),
                               onTap: () async {
-                                // ✅ Cập nhật CurrentSongProvider và lưu vào SharedPreferences
                                 currentSongProvider.setCurrentSong(song);
-
-                                // ✅ Chuyển tới NowPlayingScreen
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -232,50 +229,68 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   SizedBox(
                     height: 180,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: 10,
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/playlist');
-                          },
-                          child: Container(
-                            width: 140,
-                            margin: const EdgeInsets.only(right: 12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    'https://via.placeholder.com/140',
-                                    height: 140,
-                                    width: 140,
-                                    fit: BoxFit.cover,
+                    child: FutureBuilder<List<Playlist>>(
+                      future: _playlistsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return const Center(
+                            child: Text('Lỗi tải playlist', style: TextStyle(color: Colors.white)),
+                          );
+                        } else {
+                          final playlists = snapshot.data!;
+                          return ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: playlists.length,
+                            itemBuilder: (context, index) {
+                              final playlist = playlists[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/playlist',
+                                    arguments: playlist,
+                                  );
+                                },
+                                child: Container(
+                                  width: 140,
+                                  margin: const EdgeInsets.only(right: 12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          playlist.image ?? 'https://via.placeholder.com/140', // Fallback nếu không có image
+                                          height: 140,
+                                          width: 140,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Image.network(
+                                              'https://via.placeholder.com/140',
+                                              height: 140,
+                                              width: 140,
+                                              fit: BoxFit.cover,
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        playlist.name,
+                                        style: const TextStyle(color: Colors.white),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Tên Album',
-                                  style: TextStyle(color: Colors.white),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const Text(
-                                  'Tên nghệ sĩ',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
+                              );
+                            },
+                          );
+                        }
                       },
                     ),
                   ),

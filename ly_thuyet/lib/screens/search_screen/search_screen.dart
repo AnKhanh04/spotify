@@ -51,7 +51,7 @@ class SearchScreen extends StatelessWidget {
                                     avatarUrl != null && avatarUrl.isNotEmpty
                                         ? NetworkImage(avatarUrl)
                                         : null,
-                                    child: (avatarUrl == null || avatarUrl.isNotEmpty)
+                                    child: avatarUrl == null || avatarUrl.isEmpty
                                         ? Text(
                                       (fullName != null && fullName.isNotEmpty)
                                           ? fullName[0].toUpperCase()
@@ -133,18 +133,9 @@ class SearchScreen extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildExploreBox(
-                              '#hip hop việt nam',
-                              'https://via.placeholder.com/80x100',
-                            ),
-                            _buildExploreBox(
-                              '#indie việt',
-                              'https://via.placeholder.com/80x100',
-                            ),
-                            _buildExploreBox(
-                              '#chill r&b',
-                              'https://via.placeholder.com/80x100',
-                            ),
+                            _buildExploreBox('#hip hop việt nam'),
+                            _buildExploreBox('#indie việt'),
+                            _buildExploreBox('#chill r&b'),
                           ],
                         ),
                       ),
@@ -176,22 +167,18 @@ class SearchScreen extends StatelessWidget {
                             _CategoryBox(
                               title: 'Nhạc',
                               color: Colors.pink,
-                              image: 'https://via.placeholder.com/80',
                             ),
                             _CategoryBox(
                               title: 'Podcast',
                               color: Colors.green,
-                              image: 'https://via.placeholder.com/80',
                             ),
                             _CategoryBox(
                               title: 'Sự kiện trực tiếp',
                               color: Colors.purple,
-                              image: 'https://via.placeholder.com/80',
                             ),
                             _CategoryBox(
                               title: 'Dành Cho Bạn',
                               color: Colors.deepPurple,
-                              image: 'https://via.placeholder.com/80',
                             ),
                           ],
                         ),
@@ -210,18 +197,10 @@ class SearchScreen extends StatelessWidget {
     );
   }
 
-  static Widget _buildExploreBox(String title, String imageUrl) {
+  static Widget _buildExploreBox(String title) {
     return Column(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            imageUrl,
-            width: 80,
-            height: 100,
-            fit: BoxFit.cover,
-          ),
-        ),
+        const SizedBox(height: 100), // Giữ kích thước giống ảnh trước đây
         const SizedBox(height: 4),
         Text(title, style: const TextStyle(color: Colors.white, fontSize: 12)),
       ],
@@ -232,12 +211,10 @@ class SearchScreen extends StatelessWidget {
 class _CategoryBox extends StatelessWidget {
   final String title;
   final Color color;
-  final String image;
 
   const _CategoryBox({
     required this.title,
     required this.color,
-    required this.image,
   });
 
   @override
@@ -247,24 +224,15 @@ class _CategoryBox extends StatelessWidget {
         color: color,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            bottom: 8,
-            right: 8,
-            child: Image.network(image, width: 40, height: 40),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

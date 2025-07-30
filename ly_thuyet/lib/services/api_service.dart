@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../model/songs_model.dart';
 import '../model/playlist_model.dart';
 import '../services/user_secure_storage.dart';
+import '../model/artist_model.dart';
 
 class ApiService {
   static const String baseUrl = 'https://music-api-production-89f1.up.railway.app';
@@ -174,6 +175,15 @@ class ApiService {
     } catch (e) {
       print('Error fetching results: $e');
       throw Exception('Error fetching results: $e');
+    }
+  }
+  static Future<List<Artist>> fetchArtists() async {
+    final response = await http.get(Uri.parse('${baseUrl}/artists'));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Artist.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load artists');
     }
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'core/configs/theme/app_theme.dart';
 import 'presentation/splash/pages/splash_screen.dart';
 import 'screens/login_screens/login_screen.dart';
@@ -20,7 +19,8 @@ import 'model/songs_model.dart';
 import 'model/playlist_model.dart';
 import 'services/provider/favorite_provider.dart';
 import 'screens/favorite_song_screen.dart';
-
+import 'services/provider/recent_song_provider.dart';
+import 'screens/premium_screen.dart';
 void main() {
   runApp(
     MultiProvider(
@@ -28,6 +28,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => CurrentSongProvider()),
         ChangeNotifierProvider(create: (_) => FavoriteProvider()),
+        ChangeNotifierProvider(create: (_) => RecentSongsProvider()),
       ],
       child: const MyApp(),
     ),
@@ -122,6 +123,8 @@ class _MyAppState extends State<MyApp> {
           '/search': (context) => const SearchScreen(),
           '/library': (context) => const LibraryScreen(),
           '/favorites': (context) => const FavoriteSongsScreen(),
+          '/premium': (context) => const PremiumScreen(),
+
         };
 
         final builder = routes[settings.name];
